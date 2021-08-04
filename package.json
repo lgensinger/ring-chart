@@ -1,6 +1,6 @@
 {
   "name": "@lgv/ring-chart",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "description": "ES6 d3.js ring chart visualization",
   "main": "src/index.js",
@@ -37,7 +37,6 @@
   },
   "dependencies": {
     "d3-scale": "^4.0.0",
-    "d3-scale-chromatic": "^3.0.0",
     "d3-selection": "^3.0.0",
     "d3-shape": "^3.0.1"
   },

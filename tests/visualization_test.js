@@ -1,6 +1,6 @@
 import test from "ava";
 
-import { configurationDimension } from "../src/configuration.js";
+import { configuration, configurationDimension } from "../src/configuration.js";
 import { RingChart } from "../src/index.js";
 
 /******************** EMPTY VARIABLES ********************/
@@ -16,31 +16,17 @@ test("init", t => {
 
 });
 
-// TEST get ARC //
-test("get_arc", t => {
+// TEST get ARCS //
+test("get_arcs", t => {
 
-    t.true(typeof(rc.arc) == "function");
-
-});
-
-// TEST get ARCLABEL //
-test("get_arclabel", t => {
-
-    t.true(typeof(rc.arcLabel) == "function");
+    t.true(typeof(rc.arcs) == "function");
 
 });
 
-// TEST get COLOR //
-test("get_color", t => {
+// TEST get LABELARCS //
+test("get_labelArcs", t => {
 
-    t.true(typeof(rc.color) == "function");
-
-});
-
-// TEST get LAYOUT //
-test("get_layout", t => {
-
-    t.true(typeof(rc.color) == "function");
+    t.true(typeof(rc.labelArcs) == "function");
 
 });
 
@@ -54,7 +40,7 @@ test("render", t => {
     rc.render(document.body);
 
     // get generated element
-    let artboard = document.querySelector(".lgv-ring-chart");
+    let artboard = document.querySelector(`.${configuration.name}`);
 
     t.true(artboard !== undefined);
     t.true(artboard.nodeName == "svg");
@@ -80,31 +66,17 @@ test("init_params", t => {
 
 });
 
-// TEST get ARC //
-test("get_arc_params", t => {
+// TEST get ARCS //
+test("get_arcs_params", t => {
 
-    t.true(typeof(rct.arc) == "function");
-
-});
-
-// TEST get ARCLABEL //
-test("get_arclabel_params", t => {
-
-    t.true(typeof(rct.arcLabel) == "function");
+    t.true(typeof(rct.arcs) == "function");
 
 });
 
-// TEST get COLOR //
-test("get_color_params", t => {
+// TEST get LABELARCS //
+test("get_labelarcs_params", t => {
 
-    t.true(typeof(rct.color) == "function");
-
-});
-
-// TEST get LAYOUT //
-test("get_layout_params", t => {
-
-    t.true(typeof(rct.color) == "function");
+    t.true(typeof(rct.labelArcs) == "function");
 
 });
 
@@ -118,7 +90,7 @@ test("render_params", t => {
     rct.render(document.body);
 
     // get generated element
-    let artboard = document.querySelector(".lgv-ring-chart");
+    let artboard = document.querySelector(`.${configuration.name}`);
 
     t.true(artboard !== undefined);
     t.true(artboard.nodeName == "svg");

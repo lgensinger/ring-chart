@@ -1,9 +1,8 @@
 import { scaleOrdinal } from "d3-scale";
-import { schemeDark2 } from "d3-scale-chromatic";
 import { select } from "d3-selection";
 import { arc, pie } from "d3-shape";
 
-import { configurationDimension } from "../configuration.js";
+import { configuration, configurationDimension } from "../configuration.js";
 
 /**
  * RingChart is a part-of-a-whole visualization.
@@ -15,8 +14,11 @@ class RingChart {
     constructor(data, width=configurationDimension.width, height=configurationDimension.height) {
 
         // update self
+        this.arc = null;
         this.dataSource = data;
         this.height = height;
+        this.label = null;
+        this.name = configuration.name;
         this.radius = Math.min(width, height) / 2;
         this.width = width;
 
@@ -26,7 +28,7 @@ class RingChart {
      * Construct arc for slices.
      * @returns A d3 arc function.
      */
-    get arc() {
+    get arcs() {
         return arc()
             .outerRadius(this.radius)
             .innerRadius(this.radius * 0.75);
@@ -36,18 +38,10 @@ class RingChart {
      * Construct arc for labels.
      * @returns A d3 arc function.
      */
-    get arcLabel() {
+    get labelArcs() {
         return arc()
             .outerRadius(this.radius * 0.75)
-            .innerRadius(this.radius * 0.5);
-    }
-
-    /**
-     * Construct style.
-     * @returns A d3 color function.
-     */
-    get color() {
-        return scaleOrdinal(schemeDark2);
+            .innerRadius(this.radius * 0.65);
     }
 
     /**
@@ -60,38 +54,90 @@ class RingChart {
     }
 
     /**
+     * Position and minimally style arcs in SVG dom element.
+     */
+    configureArcs() {
+        this.arc
+            .attr("class", "lgv-arc")
+            .attr("data-arc-value", d => d.value)
+            .attr("d", d => this.arcs(d));
+    }
+
+    /**
+     * Position and minimally style labels in SVG dom element.
+     */
+    configureLabels() {
+        this.label
+            .attr("class", "lgv-label")
+            .attr("data-arc-value", d => d.value)
+            .attr("x", d => this.labelArcs.centroid(d)[0])
+            .attr("y", d => this.labelArcs.centroid(d)[1])
+            .attr("dy", "0.35em")
+            .attr("text-anchor", d => d.endAngle > Math.PI && d.startAngle > Math.PI ? "start" : (d.startAngle < Math.PI && d.endAngle > Math.PI ? "middle" : "end"))
+            .text(d => `${d.data.label}, ${Math.round(d.data.value)}%`);
+    }
+
+    /**
+     * Construct arc paths in HTML DOM.
+     * @param {node} domNode - HTML node
+     * @returns A d3.js selection.
+     */
+    generateArcs(domNode) {
+        return domNode.selectAll(".lgv-arc")
+            .data(this.dataSource ? this.layout(this.dataSource) : [])
+            .enter()
+            .append("path");
+    }
+
+    /**
+     * Generate SVG artboard in the HTML DOM.
+     * @param {node} domNode - HTML node
+     * @returns A d3.js selection.
+     */
+    generateArtboard(domNode) {
+        return select(domNode)
+            .append("svg")
+            .attr("viewBox", `0 0 ${this.width} ${this.height}`)
+            .attr("class", this.name);
+    }
+
+    /**
+     * Generate labels in SVG element.
+     * @param {node} domNode - d3.js SVG selection
+     */
+    generateLabels(domNode) {
+        return domNode
+            .selectAll(".lgv-label")
+            .data(this.dataSource ? this.layout(this.dataSource) : [])
+            .enter()
+            .append("text");
+    }
+
+    /**
      * Render visualization.
      * @param {node} domNode - HTML node
      */
     render(domNode) {
 
         // generate svg artboard
-        let artboard = select(domNode)
-            .append("svg")
-            .attr("viewBox", `0 0 ${this.width} ${this.height}`)
-            .attr("class", "lgv-ring-chart")
+        this.artboard = this.generateArtboard(domNode);
+
+        // chart content group
+        const g = this.artboard
             .append("g")
             .attr("transform", `translate(${this.width/2},${this.height/2})`);
 
-        // add inner content wrap
-        let g = artboard.selectAll(".lgv-ring-chart-arc")
-            .data(this.dataSource ? this.layout(this.dataSource) : [])
-            .enter()
-            .append("g")
-            .attr("class", "lgv-ring-chart-arc");
+        // generate arc slices
+        this.arc = this.generateArcs(g);
 
-        // have to reassign color function or the this conflicts inside the accessor
-        let color = this.color;
+        // position/style arcs
+        this.configureArcs();
 
-        // add arc slice
-        g.append("path")
-            .attr("d", this.arc)
-            .attr("fill", (d,i) => color(i));
+        // generate arc labels
+        this.label = this.generateLabels(g);
 
-        // add arc label
-        g.append("text")
-            .attr("transform", d => `translate(${this.arcLabel.centroid(d)})`)
-            .text(d => `${d.data.label}, ${Math.round(d.data.value)}%`);
+        // position/style labels
+        this.configureLabels();
 
     }
 
