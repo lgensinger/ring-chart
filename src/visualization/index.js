@@ -15,12 +15,16 @@ class RingChart {
 
         // update self
         this.arc = null;
+        this.artboard = null;
         this.dataSource = data;
         this.height = height;
         this.label = null;
         this.name = configuration.name;
         this.radius = Math.min(width, height) / 2;
         this.width = width;
+
+        // using font size as the base unit of measure make responsiveness easier to manage across devices
+        this.artboardUnit = typeof window === "undefined" ? 16 : parseFloat(getComputedStyle(document.body).fontSize);
 
     }
 
@@ -40,7 +44,7 @@ class RingChart {
      */
     get labelArcs() {
         return arc()
-            .outerRadius(this.radius * 0.75)
+            .outerRadius(this.radius * 0.7)
             .innerRadius(this.radius * 0.65);
     }
 
@@ -60,7 +64,34 @@ class RingChart {
         this.arc
             .attr("class", "lgv-arc")
             .attr("data-arc-value", d => d.value)
-            .attr("d", d => this.arcs(d));
+            .attr("d", d => this.arcs(d))
+            .on("mouseover", (e,d) => {
+
+                // update class
+                select(e.target).attr("class", "lgv-arc active");
+
+                // send event to parent
+                this.artboard.dispatch("ringmouseover", {
+                    bubbles: true,
+                    detail: {
+                        label: d.data.label,
+                        value: d.value,
+                        xy: [e.clientX + (this.artboardUnit / 2), e.clientY + (this.artboardUnit / 2)]
+                    }
+                });
+
+            })
+            .on("mouseout", (e,d) => {
+
+                // update class
+                select(e.target).attr("class", "lgv-arc");
+
+                // send event to parent
+                this.artboard.dispatch("ringmouseout", {
+                    bubbles: true
+                });
+
+            });
     }
 
     /**
@@ -70,11 +101,26 @@ class RingChart {
         this.label
             .attr("class", "lgv-label")
             .attr("data-arc-value", d => d.value)
-            .attr("x", d => this.labelArcs.centroid(d)[0])
-            .attr("y", d => this.labelArcs.centroid(d)[1])
-            .attr("dy", "0.35em")
-            .attr("text-anchor", d => d.endAngle > Math.PI && d.startAngle > Math.PI ? "start" : (d.startAngle < Math.PI && d.endAngle > Math.PI ? "middle" : "end"))
-            .text(d => `${d.data.label}, ${Math.round(d.data.value)}%`);
+            .attr("data-small-arc", d => (d.endAngle - d.startAngle) < 0.3 ? "true" : "false")
+            .attr("transform", d => `translate(${this.labelArcs.centroid(d)[0]}, ${this.labelArcs.centroid(d)[1] + 4})`)
+            .attr("text-anchor", d => {
+
+                let isOnLeftDial = d.endAngle > Math.PI && d.startAngle > Math.PI;
+                let isCentered = d.startAngle < Math.PI && d.endAngle > Math.PI && d.startAngle > (Math.PI / 2);
+
+                return isOnLeftDial ? "start" : (isCentered ? "middle" : "end");
+
+            })
+            .each((d, i, nodes) => {
+                select(nodes[i])
+                    .selectAll("tspan")
+                    .data([d.data.label.length > 11 ? `${d.data.label.slice(0,11)}...` : d.data.label, `${Math.round(d.data.value)}%`])
+                    .enter()
+                    .append("tspan")
+                    .text(x => x)
+                    .attr("x", 0)
+                    .attr("dy", (x, j) => j == 0 ? "-0.4em" : "1em")
+            });
     }
 
     /**
