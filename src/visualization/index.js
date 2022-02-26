@@ -16,6 +16,7 @@ class RingChart {
         // update self
         this.arc = null;
         this.artboard = null;
+        this.container = null;
         this.dataSource = data;
         this.height = height;
         this.label = null;
@@ -62,6 +63,13 @@ class RingChart {
      */
     configureArcs() {
         this.arc
+            .selectAll(".lgv-arc")
+            .data(d => d)
+            .join(
+                enter => enter.append("path"),
+                update => update,
+                exit => exit.remove()
+            )
             .attr("class", "lgv-arc")
             .attr("data-arc-value", d => d.value)
             .attr("d", d => this.arcs(d))
@@ -115,8 +123,11 @@ class RingChart {
                 select(nodes[i])
                     .selectAll("tspan")
                     .data([d.data.label.length > 11 ? `${d.data.label.slice(0,11)}...` : d.data.label, `${Math.round(d.data.value)}%`])
-                    .enter()
-                    .append("tspan")
+                    .join(
+                        enter => enter.append("tspan"),
+                        update => update,
+                        exit => exit.remove()
+                    )
                     .text(x => x)
                     .attr("x", 0)
                     .attr("dy", (x, j) => j == 0 ? "-0.4em" : "1em")
@@ -129,21 +140,32 @@ class RingChart {
      * @returns A d3.js selection.
      */
     generateArcs(domNode) {
-        return domNode.selectAll(".lgv-arc")
+        return domNode
+            .selectAll(".lgv-arc")
             .data(this.dataSource ? this.layout(this.dataSource) : [])
-            .enter()
-            .append("path");
+            .join(
+                enter => enter.append("path"),
+                update => update,
+                exit => exit.remove()
+            )
+            .attr("class", "lgv-arc");
     }
 
     /**
      * Generate SVG artboard in the HTML DOM.
-     * @param {node} domNode - HTML node
+     * @param {selection} domNode - d3 selection
      * @returns A d3.js selection.
      */
     generateArtboard(domNode) {
-        return select(domNode)
-            .append("svg")
-            .attr("viewBox", `0 0 ${this.width} ${this.height}`)
+        return domNode
+            .selectAll("svg")
+            .data([{height: this.height, width: this.width}])
+            .join(
+                enter => enter.append("svg"),
+                update => update,
+                exit => exit.remove()
+            )
+            .attr("viewBox", d => `0 0 ${d.width} ${d.height}`)
             .attr("class", this.name);
     }
 
@@ -155,8 +177,11 @@ class RingChart {
         return domNode
             .selectAll(".lgv-label")
             .data(this.dataSource ? this.layout(this.dataSource) : [])
-            .enter()
-            .append("text");
+            .join(
+                enter => enter.append("text"),
+                update => update,
+                exit => exit.remove()
+            );
     }
 
     /**

@@ -1,6 +1,6 @@
 {
   "name": "@lgv/ring-chart",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "type": "module",
   "description": "ES6 d3.js ring chart visualization",
   "main": "dist/ring-chart.bundle.js",
